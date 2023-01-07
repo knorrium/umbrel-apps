@@ -53,8 +53,8 @@ services:
       LIGHTNING_ENABLED: "true"
       LIGHTNING_BACKEND: "lnd"
       LND_TLS_CERT_PATH: "/lnd/tls.cert"
-      LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon"
-      LND_REST_API_URL: "http://${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_REST_PORT}"
+      LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/readonly.macaroon"
+      LND_REST_API_URL: "https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT"
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_API_IP
