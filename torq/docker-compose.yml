@@ -7,7 +7,7 @@ services:
       APP_PORT: 7028
 
   web:
-    image: lncapital/torq:0.15.4@sha256:05fa6f2282d7c90da19cdc32b9d3e7df967678566951558200c801606ed8d67e
+    image: lncapital/torq:0.17.3@sha256:5a7da465ba7dc038e61439d92b7881adc37b9b00b06e69740c27d12c92d50b89
     user: "1000:1000"
     restart: on-failure
     stop_grace_period: 1m
@@ -25,7 +25,7 @@ services:
       - --lnd.url
       - ${APP_LIGHTNING_NODE_IP}:${APP_LIGHTNING_NODE_GRPC_PORT}
       - --lnd.macaroon-path
-      - /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/readonly.macaroon
+      - /lnd/data/chain/bitcoin/${APP_BITCOIN_NETWORK}/admin.macaroon
       - --lnd.tls-path
       - /lnd/tls.cert
       - start

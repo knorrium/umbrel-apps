@@ -6,7 +6,7 @@ services:
       APP_PORT: 8090
   
   manager:
-    image: mopfelwinrux/urbit-umbrel:v1.15.0@sha256:f0f908dc1069b606e5fb45b407f9729f84b1f031932b4ddfcc7ca998d0fa90bc
+    image: mopfelwinrux/urbit-umbrel:v1.17@sha256:972e8a4c0da892a1ab2c6c31386c3668ad3aff23e72a6ac0b97485472c82e6e3
     ports:
       - "34343:34343"
     volumes:
