@@ -7,7 +7,7 @@ services:
       APP_PORT: $APP_MEMPOOL_PORT
       PROXY_AUTH_ADD: "false"
   web:
-    image: mempool/frontend:v2.4.0@sha256:f71722f1e3abfb3d8a3df6f2a32e384d39434e311bb83d810629077b4fa6ffaf
+    image: knorrium/frontend:latest
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -16,11 +16,16 @@ services:
     environment:
       FRONTEND_HTTP_PORT: $APP_MEMPOOL_PORT
       BACKEND_MAINNET_HTTP_HOST: $APP_MEMPOOL_API_IP
+      LIGHTNING: "true"
+      NGINX_PORT: $APP_MEMPOOL_PORT
+      NGINX_HOSTNAME: $APP_MEMPOOL_API_IP
+      BACKEND_MAINNET_LIGHTNING_HOST: $APP_MEMPOOL_LIGHTNING_API_IP
+      BACKEND_MAINNET_LIGHTNING_PORT: "8993"
     networks:
       default:
         ipv4_address: $APP_MEMPOOL_IP
   api:
-    image: mempool/backend:v2.4.0@sha256:6036cc6866b782efadc765e8189958940202b3fa1770eb35c35210c86efd2f47
+    image: knorrium/backend:latest
     user: "1000:1000"
     init: true
     restart: on-failure
@@ -45,10 +50,47 @@ services:
       MEMPOOL_CACHE_DIR: "/backend/cache"
       MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
       MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
-      MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "info"
+      MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "debug"
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_API_IP
+  api_lightning:
+    image: knorrium/backend:latest
+    user: "1000:1000"
+    init: true
+    restart: on-failure
+    stop_grace_period: 1m
+    command: "./wait-for-it.sh mariadb_lightning:3306 --timeout=720 --strict -- ./start.sh"
+    volumes:
+      - ${APP_DATA_DIR}/data-lightning:/backend/cache
+      - ${APP_LIGHTNING_NODE_DATA_DIR}:/lnd:ro
+    environment:
+      CORE_RPC_HOST: $APP_BITCOIN_NODE_IP
+      CORE_RPC_PORT: $APP_BITCOIN_RPC_PORT
+      CORE_RPC_USERNAME: $APP_BITCOIN_RPC_USER
+      CORE_RPC_PASSWORD: $APP_BITCOIN_RPC_PASS
+      ELECTRUM_HOST: $APP_ELECTRS_NODE_IP
+      ELECTRUM_PORT: $APP_ELECTRS_NODE_PORT
+      ELECTRUM_TLS: "false"
+      DATABASE_HOST: $APP_MEMPOOL_LIGHTNING_DB_IP
+      DATABASE_PORT: "3306"
+      DATABASE_DATABASE: "mempool_lightning"
+      DATABASE_USERNAME: "mempool_lightning"
+      DATABASE_PASSWORD: "mempool_lightning"
+      MEMPOOL_ENABLED: "false"
+      MEMPOOL_HTTP_PORT: "8993"
+      MEMPOOL_CACHE_DIR: "/backend/cache"
+      MEMPOOL_CLEAR_PROTECTION_MINUTES: "20"
+      MEMPOOL_INDEXING_BLOCKS_AMOUNT: "52560"
+      MEMPOOL_STDOUT_LOG_MIN_PRIORITY: "debug"
+      LIGHTNING_ENABLED: "true"
+      LIGHTNING_BACKEND: "lnd"
+      LND_TLS_CERT_PATH: "/lnd/tls.cert"
+      LND_MACAROON_PATH: "/lnd/data/chain/bitcoin/$APP_BITCOIN_NETWORK/readonly.macaroon"
+      LND_REST_API_URL: "https://$APP_LIGHTNING_NODE_IP:$APP_LIGHTNING_NODE_REST_PORT"
+    networks:
+       default:
+         ipv4_address: $APP_MEMPOOL_LIGHTNING_API_IP
   mariadb:
     image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
     user: "1000:1000"
@@ -64,3 +106,18 @@ services:
     networks:
        default:
          ipv4_address: $APP_MEMPOOL_DB_IP
+  mariadb_lightning:
+    image: mariadb:10.5.12@sha256:dfcba5641bdbfd7cbf5b07eeed707e6a3672f46823695a0d3aba2e49bbd9b1dd
+    user: "1000:1000"
+    restart: on-failure
+    stop_grace_period: 1m
+    volumes:
+      - ${APP_DATA_DIR}/mysql-lightning/data:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: "mempool_lightning"
+      MYSQL_USER: "mempool_lightning"
+      MYSQL_PASSWORD: "mempool_lightning"
+      MYSQL_ROOT_PASSWORD: "moneyprintergobrrr"
+    networks:
+       default:
+         ipv4_address: $APP_MEMPOOL_LIGHTNING_DB_IP
